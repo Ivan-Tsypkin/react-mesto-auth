@@ -1,18 +1,31 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
-export default function Register() {
+
+export default function Register({ onRegisterSubmit }) {
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    onRegisterSubmit(password, email);
+  }
+
   return (
     <div className="register">
       <h3 className="register__heading">Регистрация</h3>
-      <form className={`register__form`}>
+      <form className={`register__form`} onSubmit = {handleSubmit}>
 
         <input
-        type="email"
-        className="register__form-item"
-        placeholder="E-mail"
-        name="email"
-        id="email"
-        required
+          type="email"
+          className="register__form-item"
+          placeholder="E-mail"
+          name="email"
+          id="email"
+          required
+          value={email || ''}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
@@ -22,6 +35,8 @@ export default function Register() {
           name="password"
           id="password"
           required
+          value={password || ''}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
         <button

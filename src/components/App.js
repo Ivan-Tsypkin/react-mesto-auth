@@ -12,12 +12,15 @@ import Login from './Login';
 import Register from './Register';
 import ProtectedRoute from './ProtectedRoute';
 import { api } from '../utils/Api';
+import * as apiAuth from '../utils/apiAuth';
 import { CurrentUserContext } from '../contexts/CurrentUserContext';
 import { useState, useEffect } from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Route, Switch, useHistory } from 'react-router-dom';
 
 
 function App() {
+
+  const history = useHistory();
 
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
@@ -25,7 +28,15 @@ function App() {
   const [isCardDeleteConfirmOpen, setIsCardDeleteConfirmOpen] = useState({isOpen: false, cardToDelete: {}});
   const [selectedCard, setSelectedCard] = useState({isOpen: false, data: {}})
   const [currentUser, setCurrentUser] = useState({});
+  const [userData, setUserData] = useState({});
   const [cards, setCards] = useState([]);
+  const [isInfoTooltipPopupOpen, setIsInfoTooltipPopupOpen] = useState({isOpen: false, isSuccess: true});
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+
+  useEffect(() => {
+    tokenCheck()
+  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -55,6 +66,7 @@ function App() {
     setIsAddPlacePopupOpen(false);
     setIsCardDeleteConfirmOpen({isOpen: false, cardToDelete: {}});
     setSelectedCard({isOpen: false, data: selectedCard.data}); //Если очистить data при закрытии, то появляется неприятное искажение анимации закрытия: удаляется картинка и крестик закрытия перемещается в центр, а потом затухает
+    setIsInfoTooltipPopupOpen({isOpen: false});
   }
 
   function handleCardClick(data) {
@@ -119,19 +131,62 @@ function App() {
     setIsCardDeleteConfirmOpen({isOpen: true, cardToDelete: {...card}})
   }
 
+  function tokenCheck() {
+    const jwt = localStorage.getItem('jwt');
+    if (jwt) {
+      apiAuth.getContent(jwt)
+        .then(res => {
+          setIsLoggedIn(true);
+          setUserData({...res.data})
+          history.push("/")
+        })
+        .catch(error => {
+          console.log(error);
+        })
+    } else {
+      history.push("/login")
+    }
+  }
+
+  function signOut() {
+    localStorage.removeItem('jwt');
+    history.push('/login');
+  }
+
+  function handleRegisterSubmit(password, email) {
+    apiAuth.register(password, email)
+      .then(res => {
+        setIsInfoTooltipPopupOpen({isOpen: true, isSuccess: true})
+        history.push("/login")
+      })
+      .catch(error => {
+        console.log(error);
+        setIsInfoTooltipPopupOpen({isOpen: true, isSuccess: false})
+      })
+  }
+
+  function handleLoginSubmit(password, email) {
+    apiAuth.authorize(password, email)
+      .then(res => {
+        tokenCheck()
+      })
+      .catch(error => {
+        console.log(error);
+      })
+  }
 
   return (
     <div className="page">
       <div className="page__content">
         <CurrentUserContext.Provider value = {currentUser}>
 
-          <Header />
+          <Header onSignOut = {signOut} userData = {userData}/>
 
           <Switch>
 
             <ProtectedRoute
               exact path = "/"
-              loggedIn = {false}
+              loggedIn = {isLoggedIn}
               component = {Main}
                 onEditProfile = {() => setIsEditProfilePopupOpen(true)}
                 onEditAvatar = {() => setIsEditAvatarPopupOpen(true)}
@@ -143,11 +198,11 @@ function App() {
             />
 
             <Route path="/login">
-              <Login />
+              <Login onLoginSubmit = {handleLoginSubmit}/>
             </Route>
 
             <Route path="/register">
-              <Register />
+              <Register onRegisterSubmit = {handleRegisterSubmit}/>
             </Route>
 
           </Switch>
@@ -188,6 +243,8 @@ function App() {
           />
 
           <InfoTooltip
+            isOpen = {isInfoTooltipPopupOpen.isOpen}
+            isSuccess = {isInfoTooltipPopupOpen.isSuccess}
             name="info-tooltip"
             onClose = {closeAllPopups}
           />

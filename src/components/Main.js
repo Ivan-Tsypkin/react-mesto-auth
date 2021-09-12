@@ -1,18 +1,13 @@
 import Profile from './Profile';
 import Card from './Card';
 import CardsSection from './CardsSection';
-import { CurrentUserContext } from '../contexts/CurrentUserContext';
-import { useContext } from 'react';
 
 
 export default function Main(props) {
 
-  const currentUser = useContext(CurrentUserContext);
-
   return (
     <main className="main">
       <Profile
-        currentUser = {currentUser}
         {...props}
       />
       <CardsSection>

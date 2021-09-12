@@ -2,9 +2,9 @@ export default function PopupWithForm(props) {
   return (
     <div
       className={`popup popup_type_${props.name} ${props.isOpen ? 'popup_opened' : ''}`}
-      onClick = {props.onClose}
+      onMouseDown = {props.onClose}
     >
-      <div className="popup__container" onClick = {(e) => e.stopPropagation()}>
+      <div className="popup__container" onMouseDown = {(e) => e.stopPropagation()}>
         <button
           type="button"
           className="popup__close-button"

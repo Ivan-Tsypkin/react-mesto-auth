@@ -43,9 +43,9 @@ function App() {
       api.getInitialCards(),
       api.getUserInfo()
     ])
-      .then(res => {
-        setCards(res[0]);
-        setCurrentUser(res[1]);
+      .then(([cards, user]) => {
+        setCards(cards);
+        setCurrentUser(user);
       })
       .catch(error => console.log(error))
   }, [])
